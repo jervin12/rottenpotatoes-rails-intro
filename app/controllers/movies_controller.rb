@@ -13,15 +13,21 @@ class MoviesController < ApplicationController
   def index
     @all_ratings = Movie.ratings
     @ratings = params[:ratings].nil? ? Movie.ratings : params[:ratings].keys
-    sort = params[:sort]
     
-    @ratings_by_user = params[:ratings] || {}
-    if @ratings_by_user == {}
-      @ratings_by_user = Hash[@all_ratings.map { |rating| [rating, rating]}]
+    @ratings_from_user = params[:ratings] || session[:ratings] || {}
+    if @ratings_from_user == {}
+      @ratings_from_user = Hash[@all_ratings.map { |rating| [rating, rating]}]
+    end
+    
+    if params[:sort] != session[:sort] or params[:ratings] != session[:ratings]
+      session[:sort] = params[:sort] || session[:sort]
+      session[:ratings] = @ratings_from_user
+    
+      redirect_to :sort => params[:sort] || session[:sort], :ratings => @ratings_from_user and return
     end
     
     if params[:sort].present?
-      @movies = Movie.by_rating_order(@ratings, sort)
+      @movies = Movie.by_rating_order(@ratings, params[:sort] || session[:sort])
     else 
       @movies = Movie.by_rating_order(@ratings, nil)
     end
